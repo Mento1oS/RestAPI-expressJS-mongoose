@@ -28,7 +28,7 @@ const server = http.createServer((request, response)=>{
                 response.status = 200;
                 response.statusMessage = 'OK';
                 response.header = 'Content-Type: text/plain';
-                response.write('hello, ' + searchParams.get('hello')+'!');
+                response.write('Hello, ' + searchParams.get('hello')+'!');
                 response.end();
                 break;
         }
