@@ -1,52 +1,36 @@
-const http = require('http');
-const getUsers = require('./modules/users');
-const port = 3003;
-const server = http.createServer((request, response)=>{
-    const url = new URL(request.url, 'http://127.0.0.1:3003');
-    console.log(url);
-    const searchParams = new URLSearchParams(url.searchParams);
-    console.log(searchParams);
-    if (searchParams.has('users')){
-        response.status = 200;
-        response.statusMessage = 'OK';
-        response.header = 'Content-Type: application/json';
-        response.write(getUsers());
-        response.end();
-        return;
-    }
-    if(searchParams.has('hello')){
-        switch (searchParams.get('hello')) {
-            case '':
-                response.status = 400;
-                response.statusMessage = 'Bad Request';
-                response.header = 'Content-Type: text/plain';
-                response.write('enter a name');
-                response.end();
-                break;
-    
-            default:
-                response.status = 200;
-                response.statusMessage = 'OK';
-                response.header = 'Content-Type: text/plain';
-                response.write('Hello, ' + searchParams.get('hello')+'!');
-                response.end();
-                break;
-        }
-        return;
-    }
-    if(!searchParams.size){
-        response.status = 200;
-        response.statusMessage = 'OK';
-        response.header = 'Content-Type: text/plain';
-        response.write('Hello, world');
-        response.end();
-        return;
-    }
-    response.status = 500;
-    response.statusMessage = 'Internal Server Error';
-    response.header = 'Content-Type: text/plain';
-    response.end();
-});
-server.listen(port, ()=>{
-    console.log(`Сервер запущен по адресу http://127.0.0.1:${port}`);
+const dotenv = require('dotenv');
+const express = require('express');
+const bodyParser = require('body-parser'); 
+const cors = require('cors');
+const mongoose = require('mongoose');
+const {userRouter} = require('./routes/users');
+const {bookRouter} = require('./routes/books');
+const {originalUrlLogger} = require('./middlewares/originalUrlLogger');
+const { errorRouter } = require('./routes/error');
+dotenv.config();
+
+const { PORT, API_URL, MONGO_URL} = process.env;
+
+mongoose.connect(MONGO_URL)
+  .then(()=>{console.log('connected to mndb');}).
+  catch(error => console.log(error));
+
+const app = express();
+
+app.use(cors());
+
+app.use(originalUrlLogger);
+
+app.use(bodyParser.json());
+
+app.use((err, req, res, next)=>{
+    console.log(err);
+    res.status(500).send(err.stack);
+})
+app.use(bookRouter);
+app.use(userRouter);
+app.use(errorRouter);
+
+app.listen(PORT, ()=>{
+    console.log(`Сервер запущен по адресу ${API_URL}:${PORT}`);
 })
