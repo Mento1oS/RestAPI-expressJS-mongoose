@@ -7,3 +7,7 @@
 docker pull mongo
 docker run -p 27017:27017 --name mongo -d mongo
 ```
+## to start the server run in console
+```
+npm run start
+```
